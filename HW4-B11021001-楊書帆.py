@@ -12,7 +12,7 @@ t = df['T'].values
 m = len(X1)                                                             # 樣本數 = 5
 learning_rate = 1.0                                                     # 學習率
 k = 0                                                                   # 訓練次數(time)
-Max_time = 50                                                           # Iteration最多計算 50 次
+Max_time = 100                                                           # Iteration最多計算 50 次
 
 X = np.column_stack((np.ones(m), X1, X2))  # bias 項 = X0 = 1
 T = np.array(t)
