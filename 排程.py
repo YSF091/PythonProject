@@ -57,7 +57,7 @@ g_best_fit = min(p_best_fit)
 # PSO 主迴圈
 for k in range(Iter):
     w = max(w_final, w_init - (w_init - w_final) * k / Iter)
-    r1, r2 = np.random.rand(m, num_jobs), np.random.rand(m, num_jobs)
+    r1, r2 = np.random.rand(m, num_jobs), np.random.rand(m, 20)
     v = w * v + c1 * r1 * (p_best - x) + c2 * r2 * (g_best - x)
     v = np.clip(v, v_min, v_max)
     x = x + v

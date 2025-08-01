@@ -31,28 +31,30 @@ def bubble_sort(a):
 # 目標函式：根據p產生工單順序
 def objective(p):
     p = np.clip(p, 0, 19)                                    # 設定p的範圍在0 ~ 19之間
-    p = p.astype(int)                                                     # 整數
+    sorted_p = bubble_sort(p.copy())                                      # 用氣泡排序排序亂數值
+    List_sorted = List[np.argsort(sorted_p)]                                           # 根據順序排序加工時間表
 
-    R, C = List.shape
+    R, C = List_sorted.shape
     Gantt = np.zeros([R, C * 2])  # 甘特圖
     Gantt[0, 0] = 0  # 甘特圖的1s為第0秒開始
-    Gantt[0, 1] = Gantt[0, 0] + List[0, 0]  # 1e為1s那格+List第一格的時間
+    Gantt[0, 1] = Gantt[0, 0] + List_sorted[0, 0]  # 1e為1s那格+List第一格的時間
 
     for i in range(1, C):
         Gantt[0, 2 * i] = Gantt[0, (2 * i) - 1]  # s行：2 * 表示一次要完成兩個，下一個會等於前面那個的
-        Gantt[0, (2 * i) + 1] = Gantt[0, 2 * i] + List[0, i]  # e行：s行 + 任務需要時間
+        Gantt[0, (2 * i) + 1] = Gantt[0, 2 * i] + List_sorted[0, i]  # e行：s行 + 任務需要時間
 
     for i in range(1, R):  # R多少個任務
         Gantt[i, 0] = Gantt[i - 1, 1]  # 第一欄就是前一個任務R完成的時間
-        Gantt[i, 1] = Gantt[i, 0] + List[i, 0]  #
+        Gantt[i, 1] = Gantt[i, 0] + List_sorted[i, 0]  #
         for j in range(1, C):
             if Gantt[i, 2 * j - 1] >= Gantt[i - 1, 2 * j + 1]:  # 若前一個工作站結束時間比較大
                 Gantt[i, 2 * j] = Gantt[i, 2 * j - 1]  # 取代
             else:
                 Gantt[i, 2 * j] = Gantt[i - 1, 2 * j + 1]  # 沒有比較大，原本執行完的時間就會等於下一個的時間
-            Gantt[i, 2 * j + 1] = Gantt[i, 2 * j] + List[i, j]  # 比對完的s，加上工作時間，等於e
+            Gantt[i, 2 * j + 1] = Gantt[i, 2 * j] + List_sorted[i, j]  # 比對完的s，加上工作時間，等於e
 
     return Gantt[-1, -1]
+
 
 
 
@@ -61,18 +63,16 @@ np.random.seed(0)
 x = np.random.uniform(X_L, X_U, (m, num_jobs))                        # 30 個粒子，每個粒子 20 維（20 工單順序）
 
 # 對每個粒子進行氣泡排序，使其成為有序工單順序
-for i in range(m):
-    x[i] = bubble_sort(x[i])
+# for i in range(m):
+#     x[i] = bubble_sort(x[i])
 
 v = np.zeros_like(x)                                                       # v的零矩陣會跟x的陣列形狀、資料型態一樣
 p_best = x.copy()
-p_best_fit = np.array([objective(xi) for xi in p_best])                    # 每個粒子的目標值
 
 # 工單順序的候選解
-x = np.random.uniform(X_L, X_U, m)                                  # m個粒子的目前解
 p_best = x.copy()                                                   # 個人最佳解
-g_best = p_best[objective(p_best).argmin()]                         # 群體最佳解，把p_best陣列中的每個x帶入目標函式並回傳代入函式結果的陣列，接著在此陣列找出最小值
-g_best_fit = min(p_best_fit)                                        # g_best對應的目標函數值
+p_best_fitness = np.array([objective(p) for p in p_best])
+g_best = p_best[np.argmin(p_best_fitness)]
 k = 0                                                               # 第k次迭代
 
 # PSO
@@ -98,6 +98,24 @@ for k in range(Iter + 1):
     if p_new[b] < objective(g_best):  # 如果目前的個人最佳解比全體最佳解好
         g_best = p_best[b]
 
-    if k % 10 == 0:
-        print(f"Iteration {k}: Best Makespan = {objective(g_best)}")
-        print(f"Best Job Order: {np.round(g_best, 2)}")
+# 所有粒子的工件順序與對應 makespan 結果
+result_matrix = []
+
+for i in range(m):
+    sorted_p = bubble_sort(x[i].copy())          # 用氣泡排序取得排序依據
+    job_order = np.argsort(sorted_p)             # 得到實際工件順序
+    makespan = objective(x[i])                   # 計算對應 makespan
+    row = list(job_order) + [makespan]           # 一筆 = 順序 + makespan
+    result_matrix.append(row)
+
+# 印出全部結果（每一列一個粒子）
+for row in result_matrix:
+    print(np.round(row, 1))
+
+# 最佳解
+job_order = np.argsort(g_best)
+makespan = objective(g_best)
+
+print("\n最佳解：")
+print("工件順序:", [int(i) for i in job_order])
+print("總工時:", makespan)
